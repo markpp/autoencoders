@@ -53,9 +53,9 @@ class LightningAutoencoder(pl.LightningModule):
         return loss
 
     def training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
-        avg_rec_loss = torch.stack([x['Reconstruction_Loss'] for x in outputs]).mean()
-        avg_KLD = torch.stack([x['KLD'] for x in outputs]).mean()
+        avg_loss = torch.stack([x['batch_loss'] for x in outputs]).mean()
+        avg_rec_loss = torch.stack([x['callback_metrics']['Reconstruction_Loss'] for x in outputs]).mean()
+        avg_KLD = torch.stack([x['callback_metrics']['KLD'] for x in outputs]).mean()
         tensorboard_logs = {'train_loss': avg_loss,
                             'train_rec_loss': avg_rec_loss,
                             'train_KLD': avg_KLD}
@@ -64,7 +64,9 @@ class LightningAutoencoder(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         input, target = batch
+
         output = self.forward(input)
+
         loss = self.model.loss_function(*output,
                                         M_N = self.exp_parms['batch_size']/ self.num_val_imgs,
                                         batch_idx = batch_idx)

@@ -11,32 +11,6 @@ import cv2
 import random
 import math
 
-'''
-def draw_line():
-
-    offset = 20
-
-    a, b = label[:2]
-    x, y = self.crop_size//2, self.crop_size//2
-    left_x = x + offset
-    left_y = int(a * left_x + b)
-    crop = cv2.circle(crop, (left_x, left_y), 2, (0,255,0), 3)
-    crop = cv2.line(crop,
-                   (x, y),
-                   (left_x, left_y),
-                   (0,255,0), 1)
-
-
-    a, b = label[2:4]
-    x, y = self.crop_size//2, self.crop_size//2
-    right_x = x + offset #tmp.shape[1]
-    right_y = int(a * right_x + b)
-    crop = cv2.circle(crop, (right_x, right_y), 2, (0,0,255), 3)
-    crop = cv2.line(crop,
-                   (x, y),
-                   (right_x, right_y),
-                   (0,0,255), 1)
-'''
 
 class SprayDataset(torch.utils.data.Dataset):
     def __init__(self, list_path, crop_size=512):
@@ -95,7 +69,7 @@ class SprayDataset(torch.utils.data.Dataset):
             img = cv2.circle(img, (top_x, top_y), 2, (0,255,255), 5)
 
         # rotate image
-        img = cv2.warpAffine(img, M, (image_h, image_w))
+        img = cv2.warpAffine(img, M, img.shape[:2])
 
         # rotate points
         # method 1
@@ -107,10 +81,12 @@ class SprayDataset(torch.utils.data.Dataset):
         #top_y_r = int(cY + math.sin(radian) * (top_x - cX) + math.cos(radian) * (top_y - cY))
 
         # crop around new rotated top point
-        x = max(0, top_x_r - self.crop_size//2 + random.randint(-20,20))
-        y = max(0, top_y_r - self.crop_size//2 + random.randint(-20,20))
-        w, h = self.crop_size, self.crop_size
-        crop = img[y:y+h, x:x+w]
+        crop_offset = 0
+        x = max(0, top_x - self.crop_size//2 + random.randint(-crop_offset,crop_offset))
+        y = max(0, top_y - self.crop_size//2 + random.randint(-crop_offset,crop_offset))
+        x = min(x, self.image_h - self.crop_size)
+        y = min(y, self.image_h - self.crop_size)
+        crop = img[y:y+self.crop_size, x:x+self.crop_size]
 
         if show:
             # draw new top point in crop
@@ -141,7 +117,6 @@ class SprayDataset(torch.utils.data.Dataset):
         img[2] = (img[2] - 0.406)/0.225
         img = torch.from_numpy(img)
         img = img.float()
-
         return img, img#, target
 
     def __len__(self):

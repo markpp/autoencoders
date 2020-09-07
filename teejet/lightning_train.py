@@ -28,7 +28,9 @@ if __name__ == '__main__':
     # construct the argument parser and parse the arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-c", "--config", type=str,
-                    default='../configs/vae.yaml', help="path to the config file")
+                    default='configs/vae.yaml', help="path to the config file")
+    ap.add_argument("-p", "--checkpoint", type=str,
+                    default='trained_models/model.pt', help="path to the checkpoint file")
     args = vars(ap.parse_args())
 
     with open(args['config'], 'r') as file:
@@ -44,4 +46,7 @@ if __name__ == '__main__':
 
     trainer.fit(model)
 
-    torch.save(model.state_dict(), "trained_models/model.pt")
+    output_dir = 'trained_models/'
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    torch.save(model.state_dict(), os.path.join(output_dir,"model.pt"))

@@ -10,7 +10,7 @@ import cv2
 
 if __name__ == '__main__':
     """
-    Trains an autoencoder from patches of thermal imaging.
+    Trains an autoencoder from patches of RGB images.
 
     Command:
         python main.py
@@ -21,7 +21,9 @@ if __name__ == '__main__':
     ap.add_argument("-p", "--checkpoint", type=str,
                     default='trained_models/model.pt', help="path to the checkpoint file")
     ap.add_argument("-c", "--config", type=str,
-                    default='../configs/vae.yaml', help="path to the config file")
+                    default='configs/vae.yaml', help="path to the config file")
+    ap.add_argument("-d", "--data", type=str,
+                    default='/home/markpp/datasets/teejet/iphone_data/val_list.txt', help="path to list of files")
     args = vars(ap.parse_args())
 
     with open(args['config'], 'r') as file:
@@ -38,8 +40,7 @@ if __name__ == '__main__':
 
     model.eval()
 
-
-    dataset = SprayDataset('/home/markpp/datasets/teejet/iphone_data/val.txt', crop_size=64)
+    dataset = SprayDataset(args['data'], crop_size=64)
 
     rec, a, b, c = model(dataset[0][0].unsqueeze(0))
 

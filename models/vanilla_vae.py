@@ -70,7 +70,7 @@ class VanillaVAE(BaseVAE):
                                                output_padding=1),
                             nn.BatchNorm2d(hidden_dims[-1]),
                             nn.LeakyReLU(),
-                            nn.Conv2d(hidden_dims[-1], out_channels=in_channels,
+                            nn.Conv2d(hidden_dims[-1], out_channels=3,
                                       kernel_size=3, padding=1),
                             nn.Tanh())
 
