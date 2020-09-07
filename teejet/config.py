@@ -9,9 +9,10 @@
 #network_architecture = 'resnet18'
 
 from argparse import Namespace
-hparams = Namespace(**{'net': 'efficientnet-b0',
+hparams = Namespace(**{'train_list': '/home/markpp/datasets/teejet/iphone_data/train.txt',
+                       'val_list': '/home/markpp/datasets/teejet/iphone_data/val.txt'
+                       'net': 'efficientnet-b0',
                        'input_size': 240,
                        'learning_rate': 1e-3,
                        'batch_size': 32,
-                       'n_classes': 2,
-                       'n_workers':8})
+                       'n_workers':4})

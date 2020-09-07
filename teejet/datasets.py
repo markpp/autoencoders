@@ -11,21 +11,42 @@ import cv2
 import random
 import math
 
+'''
+def draw_line():
+
+    offset = 20
+
+    a, b = label[:2]
+    x, y = self.crop_size//2, self.crop_size//2
+    left_x = x + offset
+    left_y = int(a * left_x + b)
+    crop = cv2.circle(crop, (left_x, left_y), 2, (0,255,0), 3)
+    crop = cv2.line(crop,
+                   (x, y),
+                   (left_x, left_y),
+                   (0,255,0), 1)
+
+
+    a, b = label[2:4]
+    x, y = self.crop_size//2, self.crop_size//2
+    right_x = x + offset #tmp.shape[1]
+    right_y = int(a * right_x + b)
+    crop = cv2.circle(crop, (right_x, right_y), 2, (0,0,255), 3)
+    crop = cv2.line(crop,
+                   (x, y),
+                   (right_x, right_y),
+                   (0,0,255), 1)
+'''
+
 class SprayDataset(torch.utils.data.Dataset):
     def __init__(self, list_path, crop_size=512):
-
-        #self.image_size = 240
+        self.crop_size = crop_size
         self.transforms = self.get_transform()
 
         with open(list_path) as f:
             self.label_list = f.read().splitlines()
 
-        self.crop_size = crop_size
-
-        #self.image_h, self.image_w = 0, 0
-
-    def load_sample(self, idx):
-        label_path = self.label_list[idx]
+    def load_sample(self, label_path):
 
         with open(label_path) as f:
             line = f.read().splitlines()[0]
@@ -41,25 +62,23 @@ class SprayDataset(torch.utils.data.Dataset):
         #img = Image.open(self.img_list[idx]).convert("RGB")
         img = cv2.imread(image_path)
         self.image_h, self.image_w, _ = img.shape
-
         img = cv2.cvtColor(img[:self.image_h,:self.image_h], cv2.COLOR_BGR2RGB)
 
         return img, label
 
     def get_transform(self):
         tfms = []
-        #tfms.append(RandomCrop(self.image_size))
         tfms.append(ToTensor())
         tfms.append(Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]))
         return Compose(tfms)
 
-    def rot_and_crop(self, img, values):
+    def rot_and_crop(self, img, values, show=False):
         image_h, image_w, _ = img.shape
         cX, cY = image_w//2, image_h//2
 
         angle = random.randint(0,180)
-        print(angle)
         M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+
         # compute the new bounding dimensions of the image
         #cos = np.abs(M[0, 0])
         #sin = np.abs(M[0, 1])
@@ -72,7 +91,8 @@ class SprayDataset(torch.utils.data.Dataset):
 
         # original
         top_x, top_y = int(values[0]*self.image_w), int(values[1]*self.image_h)
-        img = cv2.circle(img, (top_x, top_y), 2, (0,255,255), 5)
+        if show:
+            img = cv2.circle(img, (top_x, top_y), 2, (0,255,255), 5)
 
         # rotate image
         img = cv2.warpAffine(img, M, (image_h, image_w))
@@ -92,45 +112,26 @@ class SprayDataset(torch.utils.data.Dataset):
         w, h = self.crop_size, self.crop_size
         crop = img[y:y+h, x:x+w]
 
-        # draw new top point in crop
-        crop = cv2.circle(crop, (top_x_r-x, top_y_r-y), 2, (0,0,255), 3)
+        if show:
+            # draw new top point in crop
+            crop = cv2.circle(crop, (top_x_r-x, top_y_r-y), 2, (0,0,255), 3)
 
-        left_x, left_y = int(values[2]*image_w), int(values[3]*image_h)
+        #left_x, left_y = int(values[2]*image_w), int(values[3]*image_h)
         #crop = cv2.circle(crop, (left_x-x, left_y-y), 2, (0,0,255), 3)
 
-        right_x, right_y = int(values[4]*image_w), int(values[5]*image_h)
+        #right_x, right_y = int(values[4]*image_w), int(values[5]*image_h)
         #crop = cv2.circle(crop, (right_x-x, right_y-y), 2, (0,0,255), 3)
 
-        '''
-        offset = 20
+        if show:
+            cv2.imshow("crop", crop)
+            cv2.waitKey()
 
-        a, b = label[:2]
-        x, y = self.crop_size//2, self.crop_size//2
-        left_x = x + offset
-        left_y = int(a * left_x + b)
-        crop = cv2.circle(crop, (left_x, left_y), 2, (0,255,0), 3)
-        crop = cv2.line(crop,
-                       (x, y),
-                       (left_x, left_y),
-                       (0,255,0), 1)
-
-
-        a, b = label[2:4]
-        x, y = self.crop_size//2, self.crop_size//2
-        right_x = x + offset #tmp.shape[1]
-        right_y = int(a * right_x + b)
-        crop = cv2.circle(crop, (right_x, right_y), 2, (0,0,255), 3)
-        crop = cv2.line(crop,
-                       (x, y),
-                       (right_x, right_y),
-                       (0,0,255), 1)
-        '''
-        cv2.imshow("crop", crop)
-        cv2.waitKey()
+        return crop
 
     def __getitem__(self, idx):
-        img, target = self.load_sample(idx)
-        self.rot_and_crop(img, target)
+        img, target = self.load_sample(self.label_list[idx])
+        img = self.rot_and_crop(img, target)
+
         #img = self.transforms(img)
 
         img = img.transpose((2, 0, 1))
@@ -141,7 +142,7 @@ class SprayDataset(torch.utils.data.Dataset):
         img = torch.from_numpy(img)
         img = img.float()
 
-        return img, target
+        return img, img#, target
 
     def __len__(self):
         return len(self.label_list)
