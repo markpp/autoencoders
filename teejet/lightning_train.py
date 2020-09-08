@@ -42,7 +42,7 @@ if __name__ == '__main__':
     from lightning_model import LightningAutoencoder
     model = LightningAutoencoder(config)
 
-    trainer = pl.Trainer(gpus=1, max_epochs=20, checkpoint_callback=checkpoint_callback)#, profiler=True)
+    trainer = pl.Trainer(gpus=1, max_epochs=config['trainer_params']['max_epochs'], checkpoint_callback=checkpoint_callback)#, profiler=True)
 
     trainer.fit(model)
 
