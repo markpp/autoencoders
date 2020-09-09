@@ -132,3 +132,5 @@ lightning_logs/
 *.ckpt
 *.pt
 *.png
+logs/
+MNIST/

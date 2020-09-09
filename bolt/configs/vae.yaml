@@ -1,0 +1,25 @@
+model_params:
+  name: 'VanillaVAE'
+  in_channels: 1
+  latent_dim: 32
+
+exp_params:
+  dataset: teejet
+  data_path: "data/"
+  train_list: "/home/markpp/datasets/teejet/iphone_data/train_list.txt"
+  val_list: "/home/markpp/datasets/teejet/iphone_data/train_list.txt"
+  img_size: 28
+  batch_size: 32 # Better to have a square number
+  LR: 0.001
+  weight_decay: 0.0
+  scheduler_gamma: 0.95
+
+trainer_params:
+  gpus: 1
+  max_epochs: 10
+  n_workers: 8
+
+logging_params:
+  save_dir: "logs/"
+  name: "VanillaVAE"
+  manual_seed: 1265

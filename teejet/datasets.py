@@ -46,39 +46,41 @@ class SprayDataset(torch.utils.data.Dataset):
         #tfms.append(Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]))
         return Compose(tfms)
 
-    def rot_and_crop(self, img, values, show=False):
+    def rot_and_crop(self, img, values, rot=False, show=False):
         image_h, image_w, _ = img.shape
         cX, cY = image_w//2, image_h//2
-
-        angle = random.randint(0,180)
-        M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
-
-        # compute the new bounding dimensions of the image
-        #cos = np.abs(M[0, 0])
-        #sin = np.abs(M[0, 1])
-        #nW = int((image_h * sin) + (image_w * cos))
-        #nH = int((image_h * cos) + (image_w * sin))
-
-        # adjust the rotation matrix to take into account translation
-        #M[0, 2] += (nW / 2) - cX
-        #M[1, 2] += (nH / 2) - cY
 
         # original
         top_x, top_y = int(values[0]*self.image_w), int(values[1]*self.image_h)
         if show:
             img = cv2.circle(img, (top_x, top_y), 2, (0,255,255), 5)
 
-        # rotate image
-        img = cv2.warpAffine(img, M, img.shape[:2])
+        if rot:
+            angle = random.randint(0,180)
+            M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
 
-        # rotate points
-        # method 1
-        top = M.dot(np.array((top_x, top_y, 1)))
-        top_x, top_y = int(top[0]), int(top[1])
-        # method 2
-        #radian = math.radians(angle)
-        #top_x_r = int(cX + math.cos(radian) * (top_x - cX) - math.sin(radian) * (top_y - cY))
-        #top_y_r = int(cY + math.sin(radian) * (top_x - cX) + math.cos(radian) * (top_y - cY))
+            # compute the new bounding dimensions of the image
+            #cos = np.abs(M[0, 0])
+            #sin = np.abs(M[0, 1])
+            #nW = int((image_h * sin) + (image_w * cos))
+            #nH = int((image_h * cos) + (image_w * sin))
+
+            # adjust the rotation matrix to take into account translation
+            #M[0, 2] += (nW / 2) - cX
+            #M[1, 2] += (nH / 2) - cY
+
+
+            # rotate image
+            img = cv2.warpAffine(img, M, img.shape[:2])
+
+            # rotate points
+            # method 1
+            top = M.dot(np.array((top_x, top_y, 1)))
+            top_x, top_y = int(top[0]), int(top[1])
+            # method 2
+            #radian = math.radians(angle)
+            #top_x_r = int(cX + math.cos(radian) * (top_x - cX) - math.sin(radian) * (top_y - cY))
+            #top_y_r = int(cY + math.sin(radian) * (top_x - cX) + math.cos(radian) * (top_y - cY))
 
         # crop around new rotated top point
         crop_offset = 0
@@ -117,14 +119,18 @@ class SprayDataset(torch.utils.data.Dataset):
         #img[2] = (img[2] - 0.406)/0.225
         img = torch.from_numpy(img)
         img = img.float()
-        return img, img#, target
+        return img#, img#, target
 
     def __len__(self):
         return len(self.label_list)
 
 
 if __name__ == '__main__':
-    dataset = SprayDataset('/home/markpp/datasets/teejet/iphone_data/train_list.txt')
+    dataset = SprayDataset('/home/markpp/datasets/teejet/iphone_data/val_list.txt', crop_size=256)
 
+    #for i in range(len(dataset)):
+    for i, data in enumerate(dataset):
+        img = data.mul(255).permute(1, 2, 0).byte().numpy()
+        cv2.imwrite("output/val/{}.png".format(str(i).zfill(4)),cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
-    print(dataset[10])
+        #break

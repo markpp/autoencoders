@@ -10,13 +10,13 @@ exp_params:
   val_list: "/home/markpp/datasets/teejet/iphone_data/train_list.txt"
   img_size: 64
   batch_size: 64 # Better to have a square number
-  LR: 0.005
+  LR: 0.002
   weight_decay: 0.0
   scheduler_gamma: 0.95
 
 trainer_params:
   gpus: 1
-  max_epochs: 200
+  max_epochs: 100
   n_workers: 8
 
 logging_params:

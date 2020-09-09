@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     model.eval()
 
-    dataset = SprayDataset(args['data'], crop_size=64)
+    dataset = SprayDataset(args['data'], crop_size=config['exp_params']['img_size'])
     input = dataset[100][0]
 
     #'''
