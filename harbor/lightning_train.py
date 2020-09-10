@@ -44,4 +44,7 @@ if __name__ == '__main__':
 
     trainer.fit(model)
 
-    torch.save(model.state_dict(), "trained_models/model.pt")
+    output_dir = 'trained_models/'
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    torch.save(model.state_dict(), os.path.join(output_dir,"model.pt"))

@@ -13,8 +13,10 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Subset
 from torchsummary import summary
 from torchvision.datasets import ImageFolder
+import numpy as np
 
 from model_64_64 import create_encoder, create_decoder
+
 
 class Autoencoder(pl.LightningModule):
     def __init__(self, hparams):
@@ -30,23 +32,30 @@ class Autoencoder(pl.LightningModule):
 
     def prepare_data(self):
 
-        # normalization constants
-        if hparams.nc == 1:
-            self.MEAN = torch.tensor([0.5], dtype=torch.float32)
-            self.STD = torch.tensor([0.5], dtype=torch.float32)
-        elif hparams.nc == 3:
-            self.MEAN = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32)
-            self.STD = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32)
+        if self.hparams.norm:
+            # normalization constants
+            if self.hparams.nc == 1:
+                self.MEAN = torch.tensor([0.5], dtype=torch.float32)
+                self.STD = torch.tensor([0.5], dtype=torch.float32)
+            elif self.hparams.nc == 3:
+                self.MEAN = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32)
+                self.STD = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32)
 
-        transform = transforms.Compose(
-            [
-                transforms.Resize(self.hparams.image_size),
-                transforms.Grayscale(),
-                #transforms.CenterCrop(self.hparams.image_size),
-                transforms.ToTensor(),
-                transforms.Normalize(self.MEAN.tolist(), self.STD.tolist()),
-            ]
-        )
+            transform = transforms.Compose(
+                [
+                    #transforms.Resize(self.hparams.image_size),
+                    #transforms.Grayscale(),
+                    #transforms.CenterCrop(self.hparams.image_size),
+                    transforms.ToTensor(),
+                    transforms.Normalize(self.MEAN.tolist(), self.STD.tolist()),
+                ]
+            )
+        else:
+            transform = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
 
         dataset = ImageFolder(root=self.hparams.data_root, transform=transform)
         n_sample = len(dataset)
@@ -84,14 +93,19 @@ class Autoencoder(pl.LightningModule):
         if self.hparams.batch_size < n:
             raise IndexError("You are trying to plot more images than your batch contains!")
 
-        # denormalize images
-        denormalization = transforms.Normalize((-self.MEAN / self.STD).tolist(), (1.0 / self.STD).tolist())
-        x = [denormalization(i) for i in x[:n]]
-        output = [denormalization(i) for i in output[:n]]
+        if self.hparams.norm:
+            # denormalize images
+            denormalization = transforms.Normalize((-self.MEAN / self.STD).tolist(), (1.0 / self.STD).tolist())
+            x = [denormalization(i)[2:] for i in x[:n]]
+            output = [denormalization(i)[2:] for i in output[:n]]
 
-        # make grids and save to logger
-        grid_top = vutils.make_grid(x, nrow=n)
-        grid_bottom = vutils.make_grid(output, nrow=n)
+            # make grids and save to logger
+            grid_top = vutils.make_grid(x, nrow=n)
+            grid_bottom = vutils.make_grid(output, nrow=n)
+        else:
+            # make grids and save to logger
+            grid_top = vutils.make_grid(x[:n,2:,:,:], nrow=n)
+            grid_bottom = vutils.make_grid(output[:n,2:,:,:], nrow=n)
         grid = torch.cat((grid_top, grid_bottom), 1)
         self.logger.experiment.add_image(name, grid)
 
@@ -161,6 +175,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_epochs", type=int, default=100, help="Number of maximum training epochs")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size during training")
     parser.add_argument("--nc", type=int, default=1, help="Number of channels in the training images")
+    parser.add_argument("--norm", type=int, default=0, help="Normalize or not")
     parser.add_argument("--nz", type=int, default=16, help="Size of latent vector z")
     parser.add_argument("--nfe", type=int, default=32, help="Size of feature maps in encoder")
     parser.add_argument("--nfd", type=int, default=32, help="Size of feature maps in decoder")
