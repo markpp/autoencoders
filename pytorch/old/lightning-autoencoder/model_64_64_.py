@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-def create_encoder(hparams):
+def create_encoder(hparams, train=True):
     return nn.Sequential(
         # input (nc) x 64 x 64
         nn.Conv2d(hparams['nc'], hparams['nfe'], 4, 2, 1, bias=False),

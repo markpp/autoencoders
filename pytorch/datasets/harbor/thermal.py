@@ -11,64 +11,48 @@ import math
 from views import views
 
 class HarborDataset(torch.utils.data.Dataset):
-    def __init__(self, list_path, crop_size=64, crop_idx=0):
+    def __init__(self, list_path, crop_size=64, crop_idx=0, USE_FLOW=False):
         self.crop_size = crop_size
         self.crop_idx = crop_idx
         self.transforms = self.get_transform()
+        self.USE_FLOW = USE_FLOW
 
         with open(list_path) as f:
             self.image_list = f.read().splitlines()
 
     def load_sample(self, image_path):
-
-        #img = Image.open(self.img_list[idx]).convert("RGB")
-
         thermal = cv2.imread(image_path)
         self.image_h, self.image_w, _ = thermal.shape
-
-
-        #read flow image
-        flow_x = cv2.imread(image_path.replace('img_','flow_x_'), -1)
-        flow_y = cv2.imread(image_path.replace('img_','flow_y_'), -1)
-
-        thermal[:,:,1] = flow_x
-        thermal[:,:,2] = flow_y
-
-        return thermal[:,:,:], image_path.split('/')[-3]
-
-    def get_transform(self):
-        tfms = []
-        tfms.append(ToTensor())
-        return Compose(tfms)
+        if self.USE_FLOW:
+            thermal[:,:,1] = cv2.imread(image_path.replace('img_','flow_x_'), -1)
+            thermal[:,:,2] = cv2.imread(image_path.replace('img_','flow_y_'), -1)
+        else:
+            thermal = thermal[:,:,0]
+        return thermal, image_path.split('/')[-3]
 
     def crop(self, img, view, show=False):
-
         x, y = views[view][self.crop_idx]['x'], views[view][self.crop_idx]['y']
         w, h = self.crop_size, self.crop_size
         crop = img[y:y+h, x:x+w]
-
         return crop
 
     def __getitem__(self, idx):
         img, view = self.load_sample(self.image_list[idx])
         img = self.crop(img, view)
-
-        #img = self.transforms(img)
-
         img = img / 255.0
         img = torch.from_numpy(img)
-        img = img.float()
-        #img = img.unsqueeze(0)
-        return img#, view#, img
+        #img = img.float()
+        if not self.flow:
+            img = img.unsqueeze(0)
+        return img, img
 
     def __len__(self):
         return len(self.image_list)
 
 
 if __name__ == '__main__':
-    set = 'train'
+    set = 'test'
     view = 'view1'
-
 
     output_dir = 'output'
     if not os.path.exists(output_dir):

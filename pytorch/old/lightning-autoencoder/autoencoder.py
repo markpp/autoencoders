@@ -1,5 +1,3 @@
-__author__ = "Alexander Koenig, Li Nguyen"
-
 from argparse import ArgumentParser
 
 import pytorch_lightning as pl
@@ -14,8 +12,11 @@ from torch.utils.data import DataLoader, Subset
 from torchsummary import summary
 from torchvision.datasets import ImageFolder
 import numpy as np
+from PIL import Image
 
 from model_64_64 import create_encoder, create_decoder
+#from model_128_128 import create_encoder, create_decoder
+#from model_256_256 import create_encoder, create_decoder
 
 
 class Autoencoder(pl.LightningModule):
@@ -41,11 +42,15 @@ class Autoencoder(pl.LightningModule):
                 self.MEAN = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32)
                 self.STD = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32)
 
+
             transform = transforms.Compose(
                 [
                     #transforms.Resize(self.hparams.image_size),
-                    #transforms.Grayscale(),
+                    transforms.Grayscale(),
                     #transforms.CenterCrop(self.hparams.image_size),
+                    #transforms.RandomCrop(self.hparams.image_size),
+                    #transforms.RandomHorizontalFlip(),
+                    #transforms.RandomVerticalFlip(),
                     transforms.ToTensor(),
                     transforms.Normalize(self.MEAN.tolist(), self.STD.tolist()),
                 ]
@@ -53,11 +58,16 @@ class Autoencoder(pl.LightningModule):
         else:
             transform = transforms.Compose(
                 [
+                    #transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+                    transforms.Grayscale(),
+                    #transforms.RandomHorizontalFlip(),
+                    #transforms.RandomVerticalFlip(),
+                    #transforms.RandomCrop(self.hparams.image_size),
                     transforms.ToTensor(),
                 ]
             )
 
-        dataset = ImageFolder(root=self.hparams.data_root, transform=transform)
+        dataset = ImageFolder(root=self.hparams.data_root, transform=transform, loader=lambda path: Image.open(path).convert("L"))
         n_sample = len(dataset)
         end_train_idx = int(n_sample * 0.8)
         end_val_idx = int(n_sample * 0.9)
@@ -168,7 +178,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
 
     #parser.add_argument("--data_root", type=str, default="data/teejet", help="Train root directory")
-    parser.add_argument("--data_root", type=str, default="data/view1", help="Test root directory")
+    parser.add_argument("--data_root", type=str, default="data/view1_normal", help="Train root directory")
     parser.add_argument("--log_dir", type=str, default="logs", help="Logging directory")
     parser.add_argument("--num_workers", type=int, default=4, help="num_workers > 0 turns on multi-process data loading")
     parser.add_argument("--image_size", type=int, default=64, help="Spatial size of training images")
