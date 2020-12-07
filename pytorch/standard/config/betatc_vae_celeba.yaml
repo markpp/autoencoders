@@ -1,0 +1,27 @@
+model_params:
+  name: 'BetaTCVAE'
+  in_channels: 3
+  latent_dim: 10
+  anneal_steps: 10000
+  alpha: 1.
+  beta:  6.
+  gamma: 1.
+
+exp_params:
+  dataset: celeba
+  data: "/home/markpp/datasets/celeba/"
+  image_size: 64
+  batch_size: 128 # Better to have a square number
+  LR: 0.001
+  weight_decay: 0.0
+  scheduler_gamma: 0.99
+
+trainer_params:
+  gpus: 1
+  max_epochs: 25
+  n_workers: 12
+
+logging_params:
+  save_dir: "logs/"
+  name: "BetaTCVAE"
+  manual_seed: 1265
