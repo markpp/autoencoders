@@ -6,74 +6,61 @@ import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 
 import os, sys
-from glob import glob
 import cv2
-from PIL import Image
+
+import albumentations as Augment
+
+def basic_transforms(img_height, img_width, img_channels=3):
+    augmentations = []
+    #if img_channels == 1:
+    #    augmentations.append(Augment.ToGray(p=1.0))
+    augmentations.append(Augment.Resize(img_height, img_width, interpolation=cv2.INTER_NEAREST, always_apply=True))
+    #augmentations.append(Augment.HorizontalFlip(p=0.5))
+    #augmentations.append(Augment.RandomBrightnessContrast(p=1.0))
+    return Augment.Compose(augmentations)
 
 sys.path.append('../')
 from celeba.dataset import CelebaDataset
 
-import albumentations as Augment
-from albumentations.pytorch.transforms import ToTensor
-
-def basic_transforms(img_height, img_width, image_pad=0):
-    return Augment.Compose([#Augment.ToGray(p=1.0),
-                            Augment.Resize(img_height+image_pad, img_width+image_pad, interpolation=cv2.INTER_NEAREST, always_apply=True),
-                            Augment.RandomCrop(img_height, img_width, always_apply=True),
-                            Augment.HorizontalFlip(p=0.5),
-                            Augment.RandomBrightnessContrast(p=1.0),
-                            ])#ToTensor()
-
-def extra_transforms():
-    return Augment.Compose([Augment.GaussNoise(p=0.75),
-                            Augment.CoarseDropout(p=0.5),])
-
 class CelebaDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size, image_size):
+    def __init__(self, data_dir, batch_size, image_size,img_channels, n_workers):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.image_size = image_size
-        '''
-        self.transform = transforms.Compose(
-            [
-                #transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
-                transforms.Resize(image_size),
-                transforms.CenterCrop(image_size),
-                #transforms.RandomCrop(image_size),
-                #transforms.Grayscale(),
-                transforms.RandomHorizontalFlip(),
-                #transforms.RandomVerticalFlip(),
-                transforms.ToTensor(),
-            ]
-        )
-        '''
+        self.img_channels = img_channels
+        self.n_workers = n_workers
     #def prepare_data():
         #download, unzip here. anything that should not be done distributed
     def setup(self, stage=None):
         if stage == 'fit' or stage is None:
             self.data_train = CelebaDataset(os.path.join(self.data_dir,'train'),
                                             transform=basic_transforms(img_height=self.image_size,
-                                                                      img_width=self.image_size,
-                                                                      image_pad=0),
+                                                                       img_width=self.image_size,
+                                                                       img_channels=self.img_channels),
+                                           img_channels=self.img_channels,
                                            )#noise_transform=extra_transforms())
             self.data_val = CelebaDataset(os.path.join(self.data_dir,'val'),
-                                          transform=basic_transforms(self.image_size,self.image_size))
+                                          transform=basic_transforms(self.image_size,self.image_size,self.img_channels),
+                                          img_channels=self.img_channels)
             #self.data_train = CelebaDataset(os.path.join(self.data_dir,'train'), transform=self.transform)
             #self.data_val = CelebaDataset(os.path.join(self.data_dir,'val'), transform=self.transform)
 
     def train_dataloader(self):
-        return DataLoader(self.data_train, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(self.data_train, batch_size=self.batch_size, shuffle=True, num_workers=self.n_workers, pin_memory=True)
 
     def val_dataloader(self):
-        return DataLoader(self.data_val, batch_size=self.batch_size, shuffle=False)
+        return DataLoader(self.data_val, batch_size=self.batch_size, shuffle=False, num_workers=self.n_workers, pin_memory=True)
 
+    def n_training(self):
+        return len(self.data_train)
 
 if __name__ == '__main__':
 
-    dm = CelebaDataModule(data_dir='/home/markpp/datasets/celeba/',
+    dm = CelebaDataModule(data_dir='/home/datasets/celeba/imgs',
                           batch_size=16,
-                          image_size=64)
+                          image_size=128,
+                          img_channels=1)
 
     dm.setup()
 

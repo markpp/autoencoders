@@ -134,3 +134,7 @@ lightning_logs/
 *.png
 logs/
 MNIST/
+*.jpg
+*.jpeg
+*.gif
+*.csv

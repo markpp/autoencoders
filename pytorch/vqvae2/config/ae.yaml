@@ -1,0 +1,31 @@
+model_params:
+  name: 'VQVAE2'
+  in_channels: 1
+  hidden_channels:          128
+  res_channels:             32
+  nb_res_layers:            2
+  embed_dim:                64
+  nb_entries:               512
+  nb_levels:                3
+  scaling_rates:            [4, 2, 2]
+
+exp_params:
+  dataset: sewer
+  data: "/home/markpp/datasets/sewer/"
+  image_size: 128
+  batch_size: 128 # Better to have a square number
+  LR: 0.0002
+  weight_decay: 0.0
+  scheduler_gamma: 0.95
+  beta1: 0.9
+  beta2: 0.999
+
+trainer_params:
+  gpus: 1
+  max_epochs: 20
+  n_workers: 12
+
+logging_params:
+  save_dir: "logs/"
+  name: "VanillaAE"
+  manual_seed: 1265
