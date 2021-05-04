@@ -19,6 +19,8 @@ from sewer_dataset import SewerDataset
 import albumentations as Augment
 from torch.utils.data import DataLoader
 
+torch.backends.cudnn.benchmark = True
+
 class MyDataModule(pl.LightningDataModule):
     def __init__(self):
         super().__init__()
@@ -112,4 +114,4 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
-    torch.save(model.net, os.path.join(output_dir,"net.pt"))
+    torch.save(model.net.state_dict(), os.path.join(output_dir,"net.pt"))

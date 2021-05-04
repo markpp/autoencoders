@@ -22,5 +22,5 @@ hparams = Namespace(**{# data
                        'beta': 0.25,
                        'beta1': 0.9,
                        'beta2': 0.999,
-                       'batch_size': 32,
+                       'batch_size': 48,
                        'n_workers':8})
