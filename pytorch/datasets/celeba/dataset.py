@@ -8,16 +8,15 @@ from torchvision.datasets import ImageFolder
 import os
 from glob import glob
 import cv2
-import random
+import numpy as np
 
-class SewerDataset(torch.utils.data.Dataset):
-    def __init__(self, root_dir, transform, img_channels, pairs=False):
-        self.image_list = sorted([y for y in glob(os.path.join(root_dir, '*.png'))])
+class CelebaDataset(torch.utils.data.Dataset):
+    def __init__(self, root_dir, transform, img_channels):
+        self.image_list = sorted([y for y in glob(os.path.join(root_dir, '*.jpg'))])
         if not len(self.image_list)>0:
             print("did not find any files")
         self.img_channels = img_channels
         self.transform = transform
-        self.pairs = pairs
 
     def load_sample(self, image_path):
         img = cv2.imread(image_path)
@@ -26,27 +25,25 @@ class SewerDataset(torch.utils.data.Dataset):
             img = img[:, :, np.newaxis]
         else:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        #self.image_h, self.image_w, _ = img.shape
+        h, w, c = img.shape
+        if h > w:
+            top_h = int((h - w) / 2)
+            img = img[top_h:top_h + w]
+        else:
+            left_w = int((w - h) / 2)
+            img = img[:, left_w:left_w + h]
         return img
 
     def __getitem__(self, idx):
         img = self.load_sample(self.image_list[idx])
 
+        sample = {'image':img}
         if self.transform:
-            sample = self.transform(**{'image':img})
-            x = sample["image"]
-            if self.pairs:
-                sample = self.transform(**{'image':img})
-                x_ = sample["image"]
+            sample = self.transform(**sample)
+            img = sample["image"]
 
-        x = x.transpose((2, 0, 1))
-        if self.pairs:
-            x_ = x_.transpose((2, 0, 1))
-            return torch.as_tensor(x, dtype=torch.float32)/255.0, torch.as_tensor(x_, dtype=torch.float32)/255.0
-        else:
-            return torch.as_tensor(x, dtype=torch.float32)/255.0
-
+        img = img.transpose((2, 0, 1))
+        return torch.as_tensor(img)/255.0
 
     def __len__(self):
         return len(self.image_list)
