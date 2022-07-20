@@ -8,7 +8,6 @@ import pytorch_lightning as pl
 import os, sys
 from models import *
 
-
 class LightningAutoencoder(pl.LightningModule):
 
     def __init__(self, config, n_train, n_val):
@@ -39,9 +38,9 @@ class LightningAutoencoder(pl.LightningModule):
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         avg_rec_loss = torch.stack([x['Reconstruction_Loss'] for x in outputs]).mean()
         avg_KLD = torch.stack([x['KLD'] for x in outputs]).mean()
-        self.log('loss', avg_loss, prog_bar=True)
-        self.log('rec_loss', avg_rec_loss)
-        self.log('KLD', avg_KLD)
+        self.log('train_loss', avg_loss)
+        self.log('train_rec_loss', avg_rec_loss)
+        self.log('train_KLD', avg_KLD)
 
     def validation_step(self, batch, batch_idx):
         input = batch
@@ -55,6 +54,6 @@ class LightningAutoencoder(pl.LightningModule):
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         avg_rec_loss = torch.stack([x['Reconstruction_Loss'] for x in outputs]).mean()
         avg_KLD = torch.stack([x['KLD'] for x in outputs]).mean()
-        self.log('val_loss', avg_loss, prog_bar=True)
+        self.log('val_loss', avg_loss)
         self.log('val_rec_loss', avg_rec_loss)
         self.log('val_KLD', avg_KLD)

@@ -26,7 +26,7 @@ class SewerDataModule(pl.LightningDataModule):
                 transforms.Resize(image_size),
                 transforms.RandomCrop(image_size),
                 #transforms.Grayscale(),
-                transforms.RandomHorizontalFlip(),
+                transforms.RandomHorizontalFlip(p=0.5),
                 #transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
             ]
@@ -49,7 +49,7 @@ class SewerDataModule(pl.LightningDataModule):
 if __name__ == '__main__':
 
     dm = SewerDataModule(data_dir='/home/markpp/datasets/sewer/',
-                         batch_size=16,
+                         batch_size=32,
                          image_size=64)
 
     dm.setup()
@@ -57,9 +57,9 @@ if __name__ == '__main__':
     # cleanup output dir
     import os, shutil
     output_root = "output/"
-    if os.path.exists(output_root):
-        shutil.rmtree(output_root)
-    os.makedirs(output_root)
+    if not os.path.exists(output_root):
+        #shutil.rmtree(output_root)
+        os.makedirs(output_root)
 
     sample_idx = 0
     for batch_id, batch in enumerate(dm.val_dataloader()):
@@ -72,5 +72,5 @@ if __name__ == '__main__':
             filename = "id-{}.png".format(str(sample_idx).zfill(6))
             cv2.imwrite(os.path.join(output_dir,filename),img)
             sample_idx = sample_idx + 1
-        if batch_id > 2:
+        if batch_id > 0:
             break

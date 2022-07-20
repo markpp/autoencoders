@@ -2,19 +2,23 @@ model_params:
   name: 'VanillaVAE'
   in_channels: 3
   latent_dim: 32
+  nfe: 64
+  nfd: 64
 
 exp_params:
   dataset: sewer
   data: "/home/markpp/datasets/sewer/"
-  image_size: 64
+  image_size: 128
   batch_size: 128 # Better to have a square number
-  LR: 0.001
+  LR: 0.0002
   weight_decay: 0.0
   scheduler_gamma: 0.95
+  beta1: 0.9
+  beta2: 0.999
 
 trainer_params:
   gpus: 1
-  max_epochs: 10
+  max_epochs: 20
   n_workers: 12
 
 logging_params:

@@ -16,7 +16,6 @@ checkpoint_callback = ModelCheckpoint(
     prefix='trained_models/'
 )
 
-
 def create_datamodule(config):
     sys.path.append('../datasets')
 
@@ -58,15 +57,14 @@ if __name__ == '__main__':
         print("failed to create datamodule")
         exit()
 
-
     from lightning_model import LightningAutoencoder
     model = LightningAutoencoder(config, n_train=len(dm.data_train), n_val=len(dm.data_val))
 
-    trainer = pl.Trainer(gpus=1, max_epochs=config['trainer_params']['max_epochs'], checkpoint_callback=checkpoint_callback)#, profiler=True)
+    trainer = pl.Trainer(gpus=config['trainer_params']['gpus'], max_epochs=config['trainer_params']['max_epochs'], checkpoint_callback=checkpoint_callback)#, profiler=True)
 
     trainer.fit(model, dm)
 
     output_dir = 'trained_models/'
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    torch.save(model.state_dict(), os.path.join(output_dir,"model.pt"))
+    torch.save(model.model, os.path.join(output_dir,"model.pt"))
