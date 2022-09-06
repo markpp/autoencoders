@@ -2,8 +2,11 @@ from argparse import Namespace
 
 hparams = Namespace(**{# data
                        'name': 'VQVAE2',
-                       'dataset': 'sewer',
-                       'data_path': '/home/markpp/github/autoencoders/pytorch/datasets/sewer/imgs',
+                       'train_root': '/home/aau3090/Datasets/celeba/train',
+                       'val_root': '/home/aau3090/Datasets/celeba/val',
+                       'folders': ['cat', 'dog'],
+                       'image_size': 178,
+                       'input_dim': 128,
                        'image_width': 512,
                        'image_height': 512,
                        # model
@@ -22,5 +25,5 @@ hparams = Namespace(**{# data
                        'beta': 0.25,
                        'beta1': 0.9,
                        'beta2': 0.999,
-                       'batch_size': 48,
+                       'batch_size': 96,
                        'n_workers':8})

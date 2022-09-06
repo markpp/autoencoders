@@ -64,7 +64,7 @@ class Autoencoder(pl.LightningModule):
         Saves a plot of n images from input and output batch
         """
         # make grids and save to logger
-        grid_top = vutils.make_grid(x[:n,:,:,:], nrow=n, normalize=True, value_range=(-1,1))
-        grid_bottom = vutils.make_grid(y[:n,:,:,:], nrow=n, normalize=True, value_range=(-1,1))
+        grid_top = vutils.make_grid(x[:n,:,:,:], nrow=n, normalize=True, value_range=(0,1))
+        grid_bottom = vutils.make_grid(y[:n,:,:,:], nrow=n, normalize=True, value_range=(0,1))
         grid = torch.cat((grid_top, grid_bottom), 1)
         self.logger.experiment.add_image(name, grid, self.current_epoch)

@@ -138,3 +138,6 @@ MNIST/
 *.jpeg
 *.gif
 *.csv
+*.zip
+*checkpoints*
+*logs*
