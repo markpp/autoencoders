@@ -1,0 +1,27 @@
+model_params:
+  name: 'NVAE'
+  img_channels: 3
+  latent_dim: 512
+
+exp_params:
+  dataset: sewer
+  data: "/home/datasets/sewer/imgs"
+  #dataset: celeba
+  #data: "/home/datasets/celeba/imgs"
+  image_size: 128
+  batch_size: 128
+  LR: 0.001
+  #weight_decay: 0.0
+  #scheduler_gamma: 0.95
+  #beta1: 0.9
+  #beta2: 0.999
+
+trainer_params:
+  gpus: 1
+  max_epochs: 500
+  n_workers: 12
+
+logging_params:
+  save_dir: "logs/"
+  name: "NVAE"
+  manual_seed: 1265
