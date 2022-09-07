@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as T, utils
 import os
 from PIL import Image
-
+from glob import glob
 from imagen_pytorch.t5 import t5_encode_text, DEFAULT_T5_NAME
 
 # helpers functions
@@ -27,27 +27,73 @@ def convert_image_to(img_type, image):
 
 # dataset and dataloader
 
-class Dataset(Dataset):
+class IMGDataset(Dataset):
     def __init__(
         self,
         folder,
         image_size,
         exts = ['jpg', 'jpeg', 'png', 'tiff'],
+        key = '/*/rgb/*.tif',
         convert_image_to_type = None
     ):
         super().__init__()
         self.folder = folder
         self.image_size = image_size
+
         #self.paths = [p for ext in exts for p in Path(f'{folder}').glob(f'**/*.{ext}')]
-        self.paths = [p for ext in exts for p in Path(f'{folder}').glob(f'**/*.{ext}')]
+
+        print(folder+key)
+        self.paths = glob(folder+key)
+        self.paths = [p for p in self.paths if 'VMH' in p]
 
         convert_fn = partial(convert_image_to, convert_image_to_type) if exists(convert_image_to_type) else nn.Identity()
 
         self.transform = T.Compose([
             T.Lambda(convert_fn),
-            T.Resize(image_size),
+            #T.Resize(image_size),
+            T.RandomCrop(image_size),
             T.RandomHorizontalFlip(),
-            T.CenterCrop(image_size),
+            T.RandomVerticalFlip(),
+            #T.CenterCrop(image_size),
+            T.ToTensor()
+        ])
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, index):
+        path = self.paths[index]
+        img = Image.open(path)
+        return self.transform(img)
+
+class IMGTEXTDataset(Dataset):
+    def __init__(
+        self,
+        folder,
+        image_size,
+        exts = ['jpg', 'jpeg', 'png', 'tiff'],
+        key = '/*/rgb/*.tif',
+        convert_image_to_type = None
+    ):
+        super().__init__()
+        self.folder = folder
+        self.image_size = image_size
+
+        #self.paths = [p for ext in exts for p in Path(f'{folder}').glob(f'**/*.{ext}')]
+
+        print(folder+key)
+        self.paths = glob(folder+key)
+        self.paths = [p for p in self.paths if 'VMH' in p]
+
+        convert_fn = partial(convert_image_to, convert_image_to_type) if exists(convert_image_to_type) else nn.Identity()
+
+        self.transform = T.Compose([
+            T.Lambda(convert_fn),
+            #T.Resize(image_size),
+            T.RandomCrop(image_size),
+            T.RandomHorizontalFlip(),
+            T.RandomVerticalFlip(),
+            #T.CenterCrop(image_size),
             T.ToTensor()
         ])
 

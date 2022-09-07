@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import cv2
 
+sys.path.append('../../../imagen-pytorch/')
+
 if __name__ == "__main__":
     """
     Trains an Imagen.
@@ -16,9 +18,11 @@ if __name__ == "__main__":
     Command:
         python train.py
     """
-
+    if not os.path.exists('samples'):
+        os.makedirs('samples')
+        
     from imagen_pytorch import Unet, Imagen, ImagenTrainer
-    from imagen_pytorch.data import Dataset
+    from data import IMGDataset
 
     # unets for unconditional imagen
 
@@ -36,21 +40,22 @@ if __name__ == "__main__":
     imagen = Imagen(
         condition_on_text = False,  # this must be set to False for unconditional Imagen
         unets = unet,
-        channels = 1,
+        channels = 3,
         image_sizes = 128,
-        timesteps = 1000
+        timesteps = 400
     )
 
     trainer = ImagenTrainer(
         imagen = imagen,
-        fp16 = True,
+        fp16 = True, # 16186 vs 17254
         split_valid_from_train = True # whether to split the validation dataset from the training
     ).cuda()
 
     # instantiate your dataloader, which returns the necessary inputs to the DDPM as tuple in the order of images, text embeddings, then text masks. in this case, only images is returned as it is unconditional training
 
-    dataset = Dataset('/home/aau3090/Datasets/nozzle_dataset/spray_frames/J60-11003', image_size=128)
+    #dataset = Dataset('/home/aau3090/Datasets/nozzle_dataset/spray_frames/J60-11003', image_size=128)
     #dataset = Dataset('/home/aau3090/Datasets/celeba/train', image_size=128)
+    dataset = IMGDataset('/media/markpp/Storage/datasets/ReDoCO2/Sentinel2/2020', image_size=128)
 
     print("# {} sample in dataset".format(len(dataset)))
 
@@ -58,7 +63,7 @@ if __name__ == "__main__":
 
     trainer.add_train_dataset(dataset, batch_size=64)
 
-    max_batch_size = 4
+    max_batch_size = 2
 
     # working training loop
     for i in range(200000):
